@@ -10,7 +10,7 @@ const { activity, updateActivity } = useActivity();
     <div class="max-w-6xl mx-auto">
       <div class="flex items-center gap-3 mb-4">
         <Palette class="w-8 h-8" />
-        <h1 class="text-2xl font-bold">草编团扇工作坊</h1>
+        <h1 class="text-2xl font-bold">{{ activity.name || '草编团扇工作坊' }}</h1>
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
