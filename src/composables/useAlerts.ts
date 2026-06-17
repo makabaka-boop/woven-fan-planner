@@ -61,9 +61,12 @@ export function useAlerts(
     });
 
     const insufficientMaterials: string[] = [];
+    const missingStockMaterials: string[] = [];
     materialSummary.forEach((mat, key) => {
       if (mat.available > 0 && mat.required > mat.available) {
         insufficientMaterials.push(`${mat.name} 需求${mat.required}${mat.unit}，库存${mat.available}${mat.unit} (${mat.styles.join('、')})`);
+      } else if (mat.available === 0) {
+        missingStockMaterials.push(`${mat.name} 需求${mat.required}${mat.unit}，库存为0 (${mat.styles.join('、')})`);
       }
     });
 
@@ -85,6 +88,16 @@ export function useAlerts(
         severity: 'error',
         message: `检测到 ${insufficientMaterials.length} 项材料缺口`,
         details: insufficientMaterials.slice(0, 3).join('；') + (insufficientMaterials.length > 3 ? '...' : '')
+      });
+    }
+
+    if (missingStockMaterials.length > 0) {
+      result.push({
+        id: 'material-stock-missing',
+        type: 'material-shortage',
+        severity: 'warning',
+        message: `${missingStockMaterials.length} 项材料库存为0`,
+        details: missingStockMaterials.slice(0, 3).join('；') + (missingStockMaterials.length > 3 ? '...' : '')
       });
     }
 

@@ -193,7 +193,8 @@ const handleQuickEditStyle = (styleId: string, updates: Partial<FanStyle>) => {
     <SummaryBar
       :total-styles="styles.length"
       :total-groups="groups.length"
-      :total-people="totalPeopleInGroups"
+      :total-people="activity.totalPeople"
+      :people-in-groups="totalPeopleInGroups"
       :total-duration="activity.totalDuration"
       :assigned-duration="assignedDuration"
       :total-materials="totalMaterials"

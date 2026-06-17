@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Users, Clock, Package, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { Users, Clock, Package, Plus, Trash2, ChevronDown, ChevronUp, X } from 'lucide-vue-next';
 import type { Group, FanStyle } from '../types';
 
 interface Props {
@@ -58,6 +58,7 @@ const getGroupMaterials = (group: Group) => {
 
 const selectStyleForAssignment = ref<string | null>(null);
 const assigningToGroup = ref<string | null>(null);
+const deleteConfirmGroupId = ref<string | null>(null);
 
 const startAssign = (groupId: string) => {
   assigningToGroup.value = groupId;
@@ -147,7 +148,7 @@ const cancelAssign = () => {
                 <ChevronDown v-else class="w-5 h-5" />
               </button>
               <button
-                @click="emit('deleteGroup', group.id)"
+                @click="deleteConfirmGroupId = group.id"
                 class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
               >
                 <Trash2 class="w-4 h-4" />
@@ -238,5 +239,44 @@ const cancelAssign = () => {
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="deleteConfirmGroupId"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="deleteConfirmGroupId = null"
+      >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+          <div class="px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white flex items-center justify-between">
+            <h3 class="font-semibold">确认删除</h3>
+            <button
+              @click="deleteConfirmGroupId = null"
+              class="p-1 hover:bg-white/20 rounded transition-colors"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          <div class="p-4">
+            <p class="text-gray-700">
+              确定要删除「<span class="font-semibold">{{ groups.find(g => g.id === deleteConfirmGroupId)?.name }}</span>」吗？该小组的所有分配关系也将被移除，此操作不可撤销。
+            </p>
+            <div class="flex gap-2 mt-4">
+              <button
+                @click="deleteConfirmGroupId = null"
+                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                @click="emit('deleteGroup', deleteConfirmGroupId!); deleteConfirmGroupId = null"
+                class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                确认删除
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
