@@ -40,6 +40,7 @@ const emit = defineEmits<Emits>();
 
 const showGroupSelector = ref(false);
 const showQuickEdit = ref(false);
+const showDeleteConfirm = ref(false);
 const selectedGroupId = ref<string | null>(null);
 
 const quickEditForm = ref({
@@ -187,14 +188,14 @@ const removeFAQ = (index: number) => {
 
 <template>
   <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
-    <button
-      @click="isExpanded = !isExpanded"
-      class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-    >
-      <div class="flex items-center gap-4 flex-1">
+    <div class="px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+      <button
+        @click="isExpanded = !isExpanded"
+        class="flex items-center gap-4 flex-1 text-left"
+      >
         <div class="flex-1">
           <div class="flex items-center gap-3 flex-wrap">
-            <h3 class="font-semibold text-gray-800 text-left">{{ style.name }}</h3>
+            <h3 class="font-semibold text-gray-800">{{ style.name }}</h3>
             <span
               v-if="isRecentlyCreated"
               class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-400 to-orange-400 text-white"
@@ -240,17 +241,19 @@ const removeFAQ = (index: number) => {
             </span>
           </div>
         </div>
-      </div>
-      <div class="flex items-center gap-2">
+        <ChevronUp v-if="isExpanded" class="w-5 h-5 text-gray-400 flex-shrink-0" />
+        <ChevronDown v-else class="w-5 h-5 text-gray-400 flex-shrink-0" />
+      </button>
+      <div class="flex items-center gap-1 ml-2 flex-shrink-0">
         <button
-          @click.stop="emit('copy')"
+          @click="emit('copy')"
           class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
           title="复制样式"
         >
           <Copy class="w-4 h-4" />
         </button>
         <button
-          @click.stop="openQuickEdit"
+          @click="openQuickEdit"
           class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
           title="快速编辑"
         >
@@ -258,28 +261,27 @@ const removeFAQ = (index: number) => {
         </button>
         <button
           v-if="isAssigned"
-          @click.stop="emit('unassign')"
+          @click="emit('unassign')"
           class="px-3 py-1 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
         >
           取消分配
         </button>
         <button
           v-else
-          @click.stop="openGroupSelector"
+          @click="openGroupSelector"
           class="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
         >
           分配到组
         </button>
         <button
-          @click.stop="emit('delete')"
+          @click="showDeleteConfirm = true"
           class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+          title="删除样式"
         >
           <Trash2 class="w-4 h-4" />
         </button>
-        <ChevronUp v-if="isExpanded" class="w-5 h-5 text-gray-400" />
-        <ChevronDown v-else class="w-5 h-5 text-gray-400" />
       </div>
-    </button>
+    </div>
 
     <div v-show="isExpanded" class="px-4 pb-4 border-t border-gray-100">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
@@ -648,6 +650,45 @@ const removeFAQ = (index: number) => {
                 class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 确认修改
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div
+        v-if="showDeleteConfirm"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="showDeleteConfirm = false"
+      >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden animate-bounce-in">
+          <div class="px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white flex items-center justify-between">
+            <h3 class="font-semibold">确认删除</h3>
+            <button
+              @click="showDeleteConfirm = false"
+              class="p-1 hover:bg-white/20 rounded transition-colors"
+            >
+              <X class="w-5 h-5" />
+            </button>
+          </div>
+          <div class="p-4">
+            <p class="text-sm text-gray-600 mb-4">
+              确定要删除样式「{{ style.name }}」吗？此操作无法撤销。
+            </p>
+            <div class="flex gap-2">
+              <button
+                @click="showDeleteConfirm = false"
+                class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                @click="emit('delete'); showDeleteConfirm = false"
+                class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                确认删除
               </button>
             </div>
           </div>
