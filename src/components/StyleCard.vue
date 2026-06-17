@@ -15,7 +15,8 @@ import {
   X,
   Copy,
   Sparkles,
-  Edit3
+  Edit3,
+  AlertTriangle
 } from 'lucide-vue-next';
 import type { FanStyle, DifficultyLevel, StyleStatus, MaterialItem, FAQ, Group } from '../types';
 
@@ -40,6 +41,7 @@ const emit = defineEmits<Emits>();
 
 const showGroupSelector = ref(false);
 const showQuickEdit = ref(false);
+const showDeleteConfirm = ref(false);
 const selectedGroupId = ref<string | null>(null);
 
 const quickEditForm = ref({
@@ -187,42 +189,39 @@ const removeFAQ = (index: number) => {
 
 <template>
   <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
-    <button
-      @click="isExpanded = !isExpanded"
-      class="w-full px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-    >
-      <div class="flex items-center gap-4 flex-1">
-        <div class="flex-1">
+    <div class="px-4 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+      <div class="flex items-center gap-4 flex-1 min-w-0">
+        <div class="flex-1 min-w-0">
           <div class="flex items-center gap-3 flex-wrap">
-            <h3 class="font-semibold text-gray-800 text-left">{{ style.name }}</h3>
+            <h3 class="font-semibold text-gray-800 text-left truncate">{{ style.name }}</h3>
             <span
               v-if="isRecentlyCreated"
-              class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-400 to-orange-400 text-white"
+              class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-amber-400 to-orange-400 text-white shrink-0"
             >
               <Sparkles class="w-3 h-3" />
               最近新增
             </span>
             <span
               v-else-if="isRecentlyModified"
-              class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-400 to-cyan-400 text-white"
+              class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-400 to-cyan-400 text-white shrink-0"
             >
               <Edit3 class="w-3 h-3" />
               最近修改
             </span>
             <span
-              class="px-2 py-0.5 rounded-full text-xs font-medium"
+              class="px-2 py-0.5 rounded-full text-xs font-medium shrink-0"
               :class="difficultyLabels[style.difficulty].color"
             >
               {{ difficultyLabels[style.difficulty].label }}
             </span>
             <span
-              class="px-2 py-0.5 rounded-full text-xs font-medium"
+              class="px-2 py-0.5 rounded-full text-xs font-medium shrink-0"
               :class="statusLabels[style.status].color"
             >
               {{ statusLabels[style.status].label }}
             </span>
           </div>
-          <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+          <div class="flex items-center gap-4 mt-1 text-sm text-gray-500 flex-wrap">
             <span class="flex items-center gap-1">
               <Clock class="w-4 h-4" />
               {{ style.duration }} 分钟
@@ -241,17 +240,17 @@ const removeFAQ = (index: number) => {
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0 ml-2">
         <button
           @click.stop="emit('copy')"
-          class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
+          class="p-1.5 sm:p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
           title="复制样式"
         >
           <Copy class="w-4 h-4" />
         </button>
         <button
           @click.stop="openQuickEdit"
-          class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+          class="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
           title="快速编辑"
         >
           <Edit3 class="w-4 h-4" />
@@ -259,27 +258,34 @@ const removeFAQ = (index: number) => {
         <button
           v-if="isAssigned"
           @click.stop="emit('unassign')"
-          class="px-3 py-1 text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors"
+          class="px-2 py-1 text-xs sm:text-sm bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors hidden sm:inline-block"
         >
           取消分配
         </button>
         <button
           v-else
           @click.stop="openGroupSelector"
-          class="px-3 py-1 text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors"
+          class="px-2 py-1 text-xs sm:text-sm bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors hidden sm:inline-block"
         >
           分配到组
         </button>
         <button
-          @click.stop="emit('delete')"
-          class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+          @click.stop="showDeleteConfirm = true"
+          class="p-1.5 sm:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+          title="删除样式"
         >
           <Trash2 class="w-4 h-4" />
         </button>
-        <ChevronUp v-if="isExpanded" class="w-5 h-5 text-gray-400" />
-        <ChevronDown v-else class="w-5 h-5 text-gray-400" />
+        <button
+          @click="isExpanded = !isExpanded"
+          class="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+          title="展开/收起"
+        >
+          <ChevronUp v-if="isExpanded" class="w-5 h-5" />
+          <ChevronDown v-else class="w-5 h-5" />
+        </button>
       </div>
-    </button>
+    </div>
 
     <div v-show="isExpanded" class="px-4 pb-4 border-t border-gray-100">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
@@ -650,6 +656,43 @@ const removeFAQ = (index: number) => {
                 确认修改
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div
+        v-if="showDeleteConfirm"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        @click.self="showDeleteConfirm = false"
+      >
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden animate-bounce-in">
+          <div class="px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white flex items-center gap-2">
+            <AlertTriangle class="w-5 h-5" />
+            <h3 class="font-semibold">确认删除</h3>
+          </div>
+          <div class="p-4">
+            <p class="text-gray-700 mb-2">
+              确定要删除样式「<span class="font-semibold">{{ style.name }}</span>」吗？
+            </p>
+            <p class="text-sm text-gray-500">
+              删除后无法恢复，如果该样式已分配到小组，也会被移除。
+            </p>
+          </div>
+          <div class="flex gap-2 px-4 pb-4">
+            <button
+              @click="showDeleteConfirm = false"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              @click="emit('delete'); showDeleteConfirm = false;"
+              class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              确认删除
+            </button>
           </div>
         </div>
       </div>
