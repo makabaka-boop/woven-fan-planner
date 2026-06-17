@@ -35,15 +35,19 @@ export function useAlerts(
     });
     const assignedStyles = styles.filter(s => assignedStyleIds.has(s.id));
 
-    const materialSummary = new Map<string, { name: string; unit: string; required: number; available: number; styles: string[] }>();
-    assignedStyles.forEach(style => {
+    const materialSummary = new Map<string, { name: string; unit: string; required: number; available: number | undefined; styles: string[] }>();
+    styles.forEach(style => {
       style.materials.forEach(m => {
         const key = `${m.name}-${m.unit}`;
         const existing = materialSummary.get(key);
         if (existing) {
           existing.required += m.quantity;
           if (m.available !== undefined) {
-            existing.available = Math.max(existing.available, m.available);
+            if (existing.available === undefined) {
+              existing.available = m.available;
+            } else {
+              existing.available = Math.max(existing.available, m.available);
+            }
           }
           if (!existing.styles.includes(style.name)) {
             existing.styles.push(style.name);
@@ -53,7 +57,7 @@ export function useAlerts(
             name: m.name,
             unit: m.unit,
             required: m.quantity,
-            available: m.available ?? 0,
+            available: m.available,
             styles: [style.name]
           });
         }
@@ -61,8 +65,22 @@ export function useAlerts(
     });
 
     const insufficientMaterials: string[] = [];
+    const zeroStockMaterials: string[] = [];
+    const noStockInfoMaterials: string[] = [];
+    const emptyMaterialStyles: string[] = [];
+
+    styles.forEach(style => {
+      if (style.materials.length === 0) {
+        emptyMaterialStyles.push(style.name);
+      }
+    });
+
     materialSummary.forEach((mat, key) => {
-      if (mat.available > 0 && mat.required > mat.available) {
+      if (mat.available === undefined || mat.available === null) {
+        noStockInfoMaterials.push(`${mat.name} (${mat.styles.join('、')})`);
+      } else if (mat.available === 0) {
+        zeroStockMaterials.push(`${mat.name} 需求${mat.required}${mat.unit}，库存0${mat.unit} (${mat.styles.join('、')})`);
+      } else if (mat.required > mat.available) {
         insufficientMaterials.push(`${mat.name} 需求${mat.required}${mat.unit}，库存${mat.available}${mat.unit} (${mat.styles.join('、')})`);
       }
     });
@@ -78,6 +96,26 @@ export function useAlerts(
       });
     }
 
+    if (emptyMaterialStyles.length > 0) {
+      result.push({
+        id: 'material-empty',
+        type: 'material-shortage',
+        severity: 'warning',
+        message: `${emptyMaterialStyles.length} 个样式未填写材料清单`,
+        details: emptyMaterialStyles.slice(0, 3).join('、') + (emptyMaterialStyles.length > 3 ? '...' : '')
+      });
+    }
+
+    if (zeroStockMaterials.length > 0) {
+      result.push({
+        id: 'material-zero-stock',
+        type: 'material-shortage',
+        severity: 'error',
+        message: `检测到 ${zeroStockMaterials.length} 项材料库存为0`,
+        details: zeroStockMaterials.slice(0, 3).join('；') + (zeroStockMaterials.length > 3 ? '...' : '')
+      });
+    }
+
     if (insufficientMaterials.length > 0) {
       result.push({
         id: 'material-shortage-auto',
@@ -85,6 +123,16 @@ export function useAlerts(
         severity: 'error',
         message: `检测到 ${insufficientMaterials.length} 项材料缺口`,
         details: insufficientMaterials.slice(0, 3).join('；') + (insufficientMaterials.length > 3 ? '...' : '')
+      });
+    }
+
+    if (noStockInfoMaterials.length > 0) {
+      result.push({
+        id: 'material-no-stock-info',
+        type: 'material-shortage',
+        severity: 'warning',
+        message: `${noStockInfoMaterials.length} 项材料未填写库存数量`,
+        details: noStockInfoMaterials.slice(0, 3).join('；') + (noStockInfoMaterials.length > 3 ? '...' : '')
       });
     }
 

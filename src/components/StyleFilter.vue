@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Filter, X } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { Filter, X, AlertCircle } from 'lucide-vue-next';
 import type { DifficultyLevel, StyleStatus } from '../types';
 
 interface Props {
@@ -20,8 +21,14 @@ interface Emits {
   (e: 'clear'): void;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+const isPeopleRangeInvalid = computed(() => {
+  return props.minPeople !== undefined 
+    && props.maxPeople !== undefined 
+    && props.minPeople > props.maxPeople;
+});
 
 const difficultyOptions: { value: DifficultyLevel | ''; label: string }[] = [
   { value: '', label: '全部难度' },
@@ -103,7 +110,8 @@ const statusOptions: { value: StyleStatus | ''; label: string }[] = [
           @input="emit('update:minPeople', Number(($event.target as HTMLInputElement).value) || undefined)"
           placeholder="0"
           min="0"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+          :class="isPeopleRangeInvalid ? 'border-red-400 bg-red-50' : 'border-gray-300'"
         />
       </div>
 
@@ -115,8 +123,20 @@ const statusOptions: { value: StyleStatus | ''; label: string }[] = [
           @input="emit('update:maxPeople', Number(($event.target as HTMLInputElement).value) || undefined)"
           placeholder="不限"
           min="0"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+          class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+          :class="isPeopleRangeInvalid ? 'border-red-400 bg-red-50' : 'border-gray-300'"
         />
+      </div>
+    </div>
+
+    <div
+      v-if="isPeopleRangeInvalid"
+      class="mt-3 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg"
+    >
+      <AlertCircle class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+      <div class="text-sm text-red-700">
+        <p class="font-medium">人数范围无效</p>
+        <p class="text-red-600">最少人数不能大于最多人数，请调整筛选条件。</p>
       </div>
     </div>
   </div>
