@@ -194,6 +194,7 @@ const handleQuickEditStyle = (styleId: string, updates: Partial<FanStyle>) => {
       :total-styles="styles.length"
       :total-groups="groups.length"
       :total-people="totalPeopleInGroups"
+      :total-activity-people="activity.totalPeople"
       :total-duration="activity.totalDuration"
       :assigned-duration="assignedDuration"
       :total-materials="totalMaterials"
