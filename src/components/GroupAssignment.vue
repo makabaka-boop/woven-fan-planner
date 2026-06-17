@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Users, Clock, Package, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { Users, Clock, Package, Plus, Trash2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-vue-next';
 import type { Group, FanStyle } from '../types';
 
 interface Props {
@@ -58,6 +58,9 @@ const getGroupMaterials = (group: Group) => {
 
 const selectStyleForAssignment = ref<string | null>(null);
 const assigningToGroup = ref<string | null>(null);
+const showDeleteConfirm = ref(false);
+const deletingGroupId = ref<string | null>(null);
+const deletingGroupName = ref('');
 
 const startAssign = (groupId: string) => {
   assigningToGroup.value = groupId;
@@ -75,6 +78,27 @@ const confirmAssign = () => {
 const cancelAssign = () => {
   assigningToGroup.value = null;
   selectStyleForAssignment.value = null;
+};
+
+const openDeleteConfirm = (group: Group) => {
+  deletingGroupId.value = group.id;
+  deletingGroupName.value = group.name;
+  showDeleteConfirm.value = true;
+};
+
+const confirmDeleteGroup = () => {
+  if (deletingGroupId.value) {
+    emit('deleteGroup', deletingGroupId.value);
+  }
+  showDeleteConfirm.value = false;
+  deletingGroupId.value = null;
+  deletingGroupName.value = '';
+};
+
+const cancelDeleteGroup = () => {
+  showDeleteConfirm.value = false;
+  deletingGroupId.value = null;
+  deletingGroupName.value = '';
 };
 </script>
 
@@ -147,8 +171,9 @@ const cancelAssign = () => {
                 <ChevronDown v-else class="w-5 h-5" />
               </button>
               <button
-                @click="emit('deleteGroup', group.id)"
+                @click="openDeleteConfirm(group)"
                 class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                title="删除小组"
               >
                 <Trash2 class="w-4 h-4" />
               </button>
@@ -239,4 +264,41 @@ const cancelAssign = () => {
       </div>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div
+      v-if="showDeleteConfirm"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      @click.self="cancelDeleteGroup"
+    >
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 overflow-hidden">
+        <div class="px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white flex items-center gap-2">
+          <AlertTriangle class="w-5 h-5" />
+          <h3 class="font-semibold">确认删除</h3>
+        </div>
+        <div class="p-4">
+          <p class="text-gray-600 mb-2">
+            确定要删除小组「<span class="font-medium text-gray-800">{{ deletingGroupName }}</span>」吗？
+          </p>
+          <p class="text-sm text-gray-500">
+            删除后无法恢复，组内的样式分配也会被移除。
+          </p>
+          <div class="flex gap-2 mt-4">
+            <button
+              @click="cancelDeleteGroup"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              @click="confirmDeleteGroup"
+              class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              确认删除
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
